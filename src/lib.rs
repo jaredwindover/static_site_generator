@@ -4,7 +4,6 @@ use std::path::Path;
 #[macro_use]
 extern crate horrorshow;
 use horrorshow::prelude::*;
-use horrorshow::helper::doctype;
 
 #[macro_use]
 extern crate derive_error;
@@ -14,6 +13,9 @@ use config::Config;
 
 pub mod err;
 use err::Result;
+
+mod render;
+use render::render_index;
 
 mod markdown;
 use markdown::handle_markdown_file;
@@ -52,56 +54,13 @@ fn handle_dir(path: &Path, config: &Config) -> Result<()> {
 		}
 
 		if !has_index {
-				let directory_name = path.file_name().unwrap().to_str();
-
-				let index_output = format!("{}", html! {
-						: doctype::HTML;
-						html {
-								head {
-										title: directory_name;
-										meta(charset="utf-8");
-										link(type="text/css", rel="stylesheet", href="/css/main.css");
-								}
-								body {
-										h1: directory_name;
-										ul {
-												: render_list(&out_path)
-										}
-								}
-						}
-				});
+				let index_output = format!("{}", render_index(path, config).into_string().unwrap());
 
 				out_path.push("index.html");
 				fs::write(out_path, index_output).unwrap();
 		}
 
 		Ok(())
-}
-
-fn render_list(path: &Path) -> Box<dyn RenderBox> {
-		let paths = fs::read_dir(path)
-				.unwrap()
-				.filter(|entry| entry.as_ref().unwrap().file_name() != "index.html");
-		box_html! {
-				@ for entry in paths {
-						: Raw(render_entry(entry.unwrap()))
-				}
-		}
-}
-
-fn render_entry(entry: fs::DirEntry) -> String {
-		let path = entry.path();
-		let name = path.file_stem().unwrap();
-		let file_name = path.file_name().unwrap();
-		(html!{
-				li {
-						h2 {
-								a(href=file_name.to_str()): name.to_str()
-						}
-				}
-		})
-				.into_string()
-				.unwrap()
 }
 
 pub fn run(config: Config) -> Result<()> {
