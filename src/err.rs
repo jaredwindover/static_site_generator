@@ -1,10 +1,12 @@
 use std::io;
 use std::path;
+use toml;
 
 #[derive(Debug, Error)]
 pub enum Error {
 		Io(io::Error),
-		StripPrefixError(path::StripPrefixError)
+		StripPrefixError(path::StripPrefixError),
+		TomlError(toml::de::Error)
 }
 
 impl Into<io::Error> for Error {

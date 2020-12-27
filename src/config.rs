@@ -1,7 +1,38 @@
 use std::env;
 use std::path::{PathBuf, Path};
+use serde::Deserialize;
 
 use crate::err::Result;
+
+#[derive(Debug, Deserialize)]
+pub struct IndexConfig {
+		pub page_title: Option<String>,
+		pub title: Option<String>,
+		pub exclude: Vec<String>
+}
+
+impl IndexConfig {
+		pub fn default() -> IndexConfig {
+				IndexConfig {
+						page_title: Some(String::from("dir")),
+						title: Some(String::from("dir")),
+						exclude: vec![String::from("")]
+				}
+		}
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DirectoryConfig {
+		pub index: IndexConfig
+}
+
+impl DirectoryConfig {
+		pub fn default() -> DirectoryConfig {
+				DirectoryConfig {
+						index: IndexConfig::default()
+				}
+		}
+}
 
 pub struct Config {
 		in_directory: Option<String>,
