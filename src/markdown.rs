@@ -11,7 +11,7 @@ use crate::config::Config;
 use crate::err::Result;
 
 pub fn handle_markdown_file(path: &Path, config: &Config) -> Result<()> {
-		let new_path = config.get_relative_out_path(path)?.with_extension("html");
+		let new_path = config.get_relative_out_path(path).with_extension("html");
 
 		let arena = Arena::new();
 

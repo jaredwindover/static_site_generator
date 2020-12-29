@@ -21,17 +21,8 @@ use render::render_index;
 mod markdown;
 use markdown::handle_markdown_file;
 
-fn handle_file(path: &Path, config: &Config) -> Result<()> {
-		match path
-				.extension()
-				.and_then(|ext| ext.to_str()) {
-				Some("md") => handle_markdown_file(path, config),
-				_ => copy_file(path, config)
-		}
-}
-
 fn copy_file(path: &Path, config: &Config) -> Result<()> {
-		let new_path = config.get_relative_out_path(path)?;
+		let new_path = config.get_relative_out_path(path);
 		fs::copy(path, new_path)?;
 		Ok(())
 }
@@ -59,33 +50,48 @@ fn build_index(path: &Path, config: &Config, out_path: &Path) {
 		fs::write(out_path.join("index.html"), index_output).unwrap();
 }
 
-fn handle_dir(path: &Path, config: &Config) -> Result<()> {
-		let out_path = config.get_relative_out_path(path).unwrap();
-		fs::create_dir_all(&out_path)?;
-		let paths = fs::read_dir(path)?;
-		let mut has_index = false;
-		for entry in paths {
-				if let Ok(entry) = entry {
-						let t = entry.file_type()?;
-						if t.is_file() {
-								let file_name = entry.file_name();
-								has_index |= file_name == "index.html";
-								handle_file(&entry.path(), config).unwrap();
-						} else if t.is_dir() {
-								handle_dir(&entry.path(), config).unwrap();
+
+impl Config {
+		fn handle_dir(&self, path: &Path) -> Result<()> {
+				let out_path = self.get_relative_out_path(path);
+				fs::create_dir_all(&out_path)?;
+				let paths = fs::read_dir(path)?;
+				let mut has_index = false;
+				for (entry, file_type) in paths
+						.filter_map(std::result::Result::ok)
+						.filter_map(|e| e.file_type().ok().map(|t| (e, t))) {
+								if file_type.is_file() {
+										let file_name = entry.file_name();
+										has_index |= file_name == "index.html";
+
+										self.handle_file(&entry.path()).unwrap();
+								} else if file_type.is_dir() {
+										self.handle_dir(&entry.path()).unwrap();
+								}
 						}
+
+				if !has_index {
+						build_index(path, self, &out_path);
 				}
+
+				Ok(())
 		}
 
-		if !has_index {
-				build_index(path, config, &out_path);
+		fn handle_file(&self, path: &Path) -> Result<()> {
+				if let Some(extension) = path
+						.extension()
+						.and_then(|ext| ext.to_str()) {
+								match extension{
+										"md" => handle_markdown_file(path, self),
+										_ => copy_file(path, self)
+								}
+						} else {
+								Ok(())
+						}
 		}
-
-		Ok(())
 }
 
 pub fn run(config: Config) -> Result<()> {
-		let in_path = config.get_in_path()?;
-		handle_dir(&in_path, &config)?;
-		Ok(())
+		let in_path = config.get_in_path();
+		config.handle_dir(&in_path)
 }
