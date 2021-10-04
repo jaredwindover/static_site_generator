@@ -15,6 +15,8 @@ use config::{Config, DirectoryConfig};
 pub mod err;
 use err::Result;
 
+pub mod frontmatter;
+
 mod render;
 use render::render_index;
 

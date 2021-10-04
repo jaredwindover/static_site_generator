@@ -9,6 +9,7 @@ use horrorshow::helper::doctype;
 
 use crate::config::Config;
 use crate::err::Result;
+use crate::frontmatter::strip_yaml;
 
 pub fn handle_markdown_file(path: &Path, config: &Config) -> Result<()> {
 		let new_path = config.get_relative_out_path(path).with_extension("html");
@@ -19,10 +20,11 @@ pub fn handle_markdown_file(path: &Path, config: &Config) -> Result<()> {
 		let mut buf_reader = BufReader::new(file);
 		let mut contents = String::new();
 		buf_reader.read_to_string(&mut contents)?;
+		let (index_config, rest) = strip_yaml(&contents);
 
 		let root = comrak::parse_document(
 				&arena,
-				&contents,
+				&rest,
 				&ComrakOptions::default()
 		);
 
@@ -32,11 +34,16 @@ pub fn handle_markdown_file(path: &Path, config: &Config) -> Result<()> {
 
 		let file_name = path.file_stem().unwrap().to_str();
 
+		let title: Option<String> = index_config
+				.map(|ic| {ic.title})
+				.flatten()
+				.or(file_name.map(String::from));
+
 		let full_out = format!("{}", html! {
 				: doctype::HTML;
 				html {
 						head {
-								title: file_name;
+								title: title.as_ref();
 								meta(charset="utf-8");
 								link(type="text/css", rel="stylesheet", href="/css/main.css");
 						}
