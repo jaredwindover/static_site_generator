@@ -12,34 +12,34 @@ use crate::err::Result;
 use crate::frontmatter::strip_yaml;
 
 pub fn handle_markdown_file(path: &Path, config: &Config) -> Result<()> {
-		let new_path = config.get_relative_out_path(path).with_extension("html");
+    let new_path = config.get_relative_out_path(path).with_extension("html");
 
-		let arena = Arena::new();
+    let arena = Arena::new();
 
-		let file = File::open(path)?;
-		let mut buf_reader = BufReader::new(file);
-		let mut contents = String::new();
-		buf_reader.read_to_string(&mut contents)?;
-		let (index_config, rest) = strip_yaml(&contents);
+    let file = File::open(path)?;
+    let mut buf_reader = BufReader::new(file);
+    let mut contents = String::new();
+    buf_reader.read_to_string(&mut contents)?;
+    let (index_config, rest) = strip_yaml(&contents);
 
-		let root = comrak::parse_document(
-				&arena,
-				&rest,
-				&ComrakOptions::default()
-		);
+    let root = comrak::parse_document(
+        &arena,
+        &rest,
+        &ComrakOptions::default(),
+    );
 
-		let mut html_out = vec![];
-		comrak::format_html(root, &ComrakOptions::default(), &mut html_out).unwrap();
-		let html_out = String::from_utf8(html_out).unwrap();
+    let mut html_out = vec![];
+    comrak::format_html(root, &ComrakOptions::default(), &mut html_out).unwrap();
+    let html_out = String::from_utf8(html_out).unwrap();
 
-		let file_name = path.file_stem().unwrap().to_str();
+    let file_name = path.file_stem().unwrap().to_str();
 
-		let title: Option<String> = index_config
-				.map(|ic| {ic.title})
-				.flatten()
-				.or(file_name.map(String::from));
+    let title: Option<String> = index_config
+        .map(|ic| { ic.title })
+        .flatten()
+        .or(file_name.map(String::from));
 
-		let full_out = format!("{}", html! {
+    let full_out = format!("{}", html! {
 				: doctype::HTML;
 				html {
 						head {
@@ -53,7 +53,7 @@ pub fn handle_markdown_file(path: &Path, config: &Config) -> Result<()> {
 				}
 		});
 
-		fs::write(new_path, full_out).unwrap();
+    fs::write(new_path, full_out).unwrap();
 
-		Ok(())
+    Ok(())
 }
