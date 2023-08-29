@@ -64,6 +64,10 @@ impl Config {
     fn handle_dir(&self, path: &Path) -> Result<()> {
         let out_path = self.get_relative_out_path(path);
         fs::create_dir_all(&out_path)?;
+				if self.build_draft() {
+						let draft_path = self.get_relative_out_draft_path(path).unwrap();
+						fs::create_dir_all(draft_path)?;
+				}
         let paths = fs::read_dir(path)?;
         let mut has_index = false;
         for (entry, file_type) in paths
@@ -106,5 +110,9 @@ impl Config {
 
 pub fn run(config: Config) -> Result<()> {
     let in_path = config.get_in_path();
+		if config.build_draft() {
+				let draft_dir = config.get_draft_path().unwrap();
+        fs::create_dir_all(&draft_dir)?;
+		}
     config.handle_dir(&in_path)
 }

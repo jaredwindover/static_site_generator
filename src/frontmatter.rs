@@ -37,6 +37,7 @@ pub fn strip_yaml(contents: &str) -> (Option<IndexConfig>, &str) {
 
 #[derive(Debug, Deserialize)]
 pub struct IndexConfig {
-    pub title: Option<String>,
-    pub date: Option<NaiveDate>,
+		pub title: Option<String>,
+		pub date: Option<NaiveDate>,
+		pub is_draft: Option<bool>
 }
