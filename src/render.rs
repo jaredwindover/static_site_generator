@@ -40,18 +40,22 @@ pub fn render_index<'a>(
 
 fn render_list<'a>(path: &Path, index_config: &'a IndexConfig) -> Box<dyn RenderBox + 'a> {
     let default_excludes = &["index.html", ".ssg.toml"];
-    let paths = fs::read_dir(path)
+    let mut dirs: Vec<_> = fs::read_dir(path)
         .unwrap()
         .filter(move |entry| {
             let file_name = entry.as_ref().unwrap().file_name();
             let name = file_name.to_str();
-            !index_config.exclude.iter().map(String::as_str)
+            let exclude = index_config.exclude.iter().map(String::as_str)
                 .chain(default_excludes.iter().map(|s| *s))
-                .any(|e| name.map(|n| n == e).unwrap_or(false))
-        });
+                .any(|e| name.map(|n| n == e).unwrap_or(false));
+						!exclude
+        })
+				.map(|r| r.unwrap())
+				.collect();
+		dirs.sort_by_key(|dir| dir.path());
     box_html! {
-				@ for entry in paths {
-						: render_path(&entry.unwrap().path())
+				@ for dir in dirs {
+						: render_path(&dir.path())
 				}
 		}
 }

@@ -39,8 +39,8 @@ fn get_dir_config_from_path(path: &Path) -> Result<DirectoryConfig> {
     let dir_config = path.join(".ssg.toml");
     let mut dir_config = fs::File::open(dir_config)?;
     dir_config.read_to_string(&mut dir_config_contents)?;
-    let dir_config = toml::from_str(&dir_config_contents)?;
-    Ok(dir_config)
+    let dir_config = toml::from_str(&dir_config_contents);
+    Ok(dir_config.unwrap())
 }
 
 fn get_dir_config_or_default(path: &Path) -> DirectoryConfig {
@@ -50,11 +50,13 @@ fn get_dir_config_or_default(path: &Path) -> DirectoryConfig {
 
 fn build_index(path: &Path, config: &Config, out_path: &Path) {
     let index_config = get_dir_config_or_default(path).index;
-    let index_output = format!(
-        "{}",
-        render_index(path, config, &index_config).into_string().unwrap());
+	if !index_config.no_index {
+		let index_output = format!(
+			"{}",
+			render_index(path, config, &index_config).into_string().unwrap());
 
-    fs::write(out_path.join("index.html"), index_output).unwrap();
+		fs::write(out_path.join("index.html"), index_output).unwrap();
+	}
 }
 
 
@@ -85,7 +87,11 @@ impl Config {
     }
 
     fn handle_file(&self, path: &Path) -> Result<()> {
-        if let Some(extension) = path
+        if path.file_name()
+            .map(|p| p == ".ssg.toml")
+            .unwrap_or(false) {
+            Ok(())
+        } else if let Some(extension) = path
             .extension()
             .and_then(|ext| ext.to_str()) {
             match extension {

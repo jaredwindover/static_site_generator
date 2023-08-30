@@ -21,15 +21,17 @@ pub fn handle_markdown_file(path: &Path, config: &Config) -> Result<()> {
     let mut contents = String::new();
     buf_reader.read_to_string(&mut contents)?;
     let (index_config, rest) = strip_yaml(&contents);
+		let mut options = ComrakOptions::default();
+		options.render.unsafe_ = true;
 
     let root = comrak::parse_document(
         &arena,
         &rest,
-        &ComrakOptions::default(),
+        &options,
     );
 
     let mut html_out = vec![];
-    comrak::format_html(root, &ComrakOptions::default(), &mut html_out).unwrap();
+    comrak::format_html(root, &options, &mut html_out).unwrap();
     let html_out = String::from_utf8(html_out).unwrap();
 
     let file_name = path.file_stem().unwrap().to_str();

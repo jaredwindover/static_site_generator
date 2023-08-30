@@ -2,11 +2,16 @@ use std::env;
 use std::path::{PathBuf, Path};
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct IndexConfig {
+    #[serde(default)]
     pub page_title: Option<String>,
+    #[serde(default)]
     pub title: Option<String>,
+    #[serde(default)]
     pub exclude: Vec<String>,
+    #[serde(default)]
+	pub no_index: bool
 }
 
 impl IndexConfig {
@@ -15,12 +20,14 @@ impl IndexConfig {
             page_title: Some(String::from("dir")),
             title: Some(String::from("dir")),
             exclude: vec![String::from("")],
+			no_index: false
 		}
     }
 }
 
 #[derive(Debug, Deserialize)]
 pub struct DirectoryConfig {
+    #[serde(default)]
     pub index: IndexConfig,
 }
 
